@@ -7,7 +7,8 @@ import java.util.Scanner;
 public class Client {
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
-        while (true){
+        boolean keepGoing = true;
+        while (keepGoing) {
             String command = scanner.nextLine();
             switch (command){
                 case "ls":
@@ -32,6 +33,7 @@ public class Client {
 
                 case "q":
                     quit();
+                    keepGoing = false;
                     break;
 
                 default:
