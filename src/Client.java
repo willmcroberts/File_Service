@@ -8,7 +8,9 @@ public class Client {
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         boolean keepGoing = true;
+        System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
         while (keepGoing) {
+            System.out.print("> ");
             String command = scanner.nextLine();
             switch (command){
                 case "ls":
@@ -32,12 +34,13 @@ public class Client {
                     break;
 
                 case "q":
-                    quit();
                     keepGoing = false;
+                    System.out.println("You have quit");
                     break;
 
                 default:
-                    System.out.println("Invalid Command");
+                    System.out.println("Invalid Command\n");
+                    System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q");
             }
         }
     }
@@ -47,23 +50,26 @@ public class Client {
     }
 
     public static void delete(){
-        System.out.println("delete");
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter file name to delete in the server: ");
+        scanner.nextLine();
     }
 
     public static void rename(){
-        System.out.println("rename");
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter file name to rename in the server: ");
+        scanner.nextLine();
     }
 
     public static void download(){
-        System.out.println("download");
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter file name to download from server: ");
+        scanner.nextLine();
     }
 
     public static void upload(){
-        System.out.println("upload");
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter file name to upload to server: ");
+        scanner.nextLine();
     }
-
-    public static void quit(){
-        System.out.println("quit");
-    }
-
 }
