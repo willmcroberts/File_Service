@@ -6,32 +6,62 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) throws IOException {
-        if(args.length != 2){
-            System.out.println("Need two arguments: serverIP and serverPort");
-            return;
+        Scanner scanner = new Scanner(System.in);
+        while (true){
+            String command = scanner.nextLine();
+            switch (command){
+                case "ls":
+                    list();
+                    break;
+
+                case "del":
+                    delete();
+                    break;
+
+                case "rnm":
+                    rename();
+                    break;
+
+                case "dwn":
+                    download();
+                    break;
+
+                case "up":
+                    upload();
+                    break;
+
+                case "q":
+                    quit();
+                    break;
+
+                default:
+                    System.out.println("Invalid Command");
+            }
         }
-        Scanner keyboard = new Scanner(System.in);
-        String input = keyboard.nextLine();
-        byte[] message = input.getBytes();
-
-        String serverIP = args[0];
-        int serverPort = Integer.parseInt(args[1]);
-
-        // trigger a connect request to the server and establish the connection
-        Socket mySocket = new Socket(serverIP, serverPort);
-        InputStream in = mySocket.getInputStream();
-        OutputStream out = mySocket.getOutputStream();
-        out.write(message);
-        // triggers the special signal to server so that it can get out of the while loop
-        mySocket.shutdownOutput();
-
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-
-        while((bytesRead = in.read(buffer)) != -1){
-            String reply = new String(buffer, 0, bytesRead);
-            System.out.println(reply);
-        }
-        mySocket.close();
     }
+
+    public static void list(){
+        System.out.println("list");
+    }
+
+    public static void delete(){
+        System.out.println("delete");
+    }
+
+    public static void rename(){
+        System.out.println("rename");
+    }
+
+    public static void download(){
+        System.out.println("download");
+    }
+
+    public static void upload(){
+        System.out.println("upload");
+    }
+
+    public static void quit(){
+        System.out.println("quit");
+    }
+
 }
