@@ -6,8 +6,17 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) throws IOException {
+        if(args.length != 2){
+            System.out.println("Need two arguments: serverIP and serverPort");
+            return;
+        }
+
         Scanner scanner = new Scanner(System.in);
         boolean keepGoing = true;
+
+        String serverIP = args[0];
+        int serverPort = Integer.parseInt(args[1]);
+
         System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
         while (keepGoing) {
             System.out.print("> ");
