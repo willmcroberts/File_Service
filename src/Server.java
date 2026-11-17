@@ -21,6 +21,21 @@ public class Server {
         }
     }
 
+    public static void listServerFiles() {
+        File serverFileFolder = new File("ServerFiles");
+        File[] files = serverFileFolder.listFiles();
+
+        if (files != null){
+            for (File file : files){
+                if (file.isFile()){
+                    System.out.println(file.getName());
+                }
+            }
+        } else {
+            System.out.println("Server files list is empty");
+        }
+    }
+
     public static class ClientHandler implements Runnable {
         private final Socket clientSocket;
 
