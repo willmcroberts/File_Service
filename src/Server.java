@@ -15,11 +15,7 @@ public class Server {
         ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
 
         try (ServerSocket listenSocket = new ServerSocket(port)) {
-            executorService.submit(new KeyboardMonitor(listenSocket));
-            while (true) {
-                Socket clientSocket = listenSocket.accept();
-                executorService.submit(new ClientHandler((clientSocket)));
-            }
+
         } catch (SocketException e){
             executorService.shutdown();
         }
@@ -33,18 +29,8 @@ public class Server {
         }
 
         public void run() {
-            System.out.println("client connected: " + clientSocket.getInetAddress());
             try {
-                InputStream in = clientSocket.getInputStream();
-                OutputStream out = clientSocket.getOutputStream();
-                byte[] buffer = new byte[1024];
-                int bytesRead;
 
-                while ((bytesRead = in.read(buffer)) != -1) {
-                    String message = new String(buffer, 0, bytesRead);
-                    byte[] reply = message.toUpperCase().getBytes();
-                    out.write(reply);
-                }
                 clientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
