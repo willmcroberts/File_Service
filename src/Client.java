@@ -1,22 +1,11 @@
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) throws IOException {
-        if(args.length != 2){
-            System.out.println("Need two arguments: serverIP and serverPort");
-            return;
-        }
-
         Scanner scanner = new Scanner(System.in);
         boolean keepGoing = true;
-
-        String serverIP = args[0];
-        int serverPort = Integer.parseInt(args[1]);
-
         System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
         while (keepGoing) {
             System.out.print("> ");
@@ -55,7 +44,18 @@ public class Client {
     }
 
     public static void list(){
-        System.out.println("list");
+       File serverFileFolder = new File("ServerFiles");
+        File[] files = serverFileFolder.listFiles();
+
+        if (files != null){
+            for (File file : files){
+                if (file.isFile()){
+                    System.out.println(file.getName());
+                }
+            }
+        } else {
+            System.out.println("Server files list is empty");
+        }
     }
 
     public static void delete(){
