@@ -1,3 +1,4 @@
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,33 +22,33 @@ public class Client {
 
         System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
         boolean keepGoing = true;
+
         while (keepGoing) {
             String clientToServerMessage = optionMenu();
+
             if ("q".equals(clientToServerMessage)) {
                 keepGoing = false;
-            } else {
+            } else if (clientToServerMessage != null) {
                 out.write(clientToServerMessage.getBytes());
-
-                mySocket.shutdownOutput();
+                out.flush();
 
                 byte[] buffer = new byte[1024];
-                int bytesRead;
+                int bytesRead = in.read(buffer);
 
-                while ((bytesRead = in.read(buffer)) != -1) {
+                if (bytesRead != -1) {
                     String reply = new String(buffer, 0, bytesRead);
                     System.out.println(reply);
                 }
-                mySocket.close();
             }
         }
-     //   mySocket.shutdownOutput();
+        mySocket.close();
     }
-
 
     public static String optionMenu() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("> ");
         String command = scanner.nextLine();
+
         switch (command) {
             case "ls":
                 return command;
@@ -68,7 +69,6 @@ public class Client {
         }
         return null;
     }
-
 
     public static void delete() {
         Scanner scanner = new Scanner(System.in);
