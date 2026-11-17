@@ -16,6 +16,19 @@ public class Server {
         ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
 
         try (ServerSocket listenSocket = new ServerSocket(port)) {
+            Socket clientSocket = listenSocket.accept();
+
+            InputStream in = clientSocket.getInputStream();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            // Where the server reads and replies
+            while ((bytesRead = in.read(buffer)) != -1) {
+                String message = new String(buffer, 0, bytesRead);
+                System.out.println(message);
+            }
+
+            clientSocket.close();
 
         } catch (SocketException e){
             executorService.shutdown();

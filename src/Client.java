@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) throws IOException {
-       /* if (args.length != 2) {
+        if (args.length != 2) {
             System.out.println("Need 2 arguments: serverIP and serverPort");
             return;
         }
@@ -18,7 +18,7 @@ public class Client {
         Socket mySocket = new Socket(serverIP, serverPort);
         InputStream in = mySocket.getInputStream();
         OutputStream out = mySocket.getOutputStream();
-*/
+
         System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
         boolean keepGoing = true;
         while (keepGoing) {
@@ -26,9 +26,21 @@ public class Client {
             if ("q".equals(clientToServerMessage)) {
                 keepGoing = false;
             } else {
-                System.out.println("Client " + clientToServerMessage);
+                out.write(clientToServerMessage.getBytes());
+
+                mySocket.shutdownOutput();
+
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    String reply = new String(buffer, 0, bytesRead);
+                    System.out.println(reply);
+                }
+                mySocket.close();
             }
         }
+     //   mySocket.shutdownOutput();
     }
 
 
