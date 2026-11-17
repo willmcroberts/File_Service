@@ -4,13 +4,20 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) throws IOException {
+
+
+        optionMenu();
+    }
+
+
+    public static void optionMenu() {
         Scanner scanner = new Scanner(System.in);
         boolean keepGoing = true;
         System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
         while (keepGoing) {
             System.out.print("> ");
             String command = scanner.nextLine();
-            switch (command){
+            switch (command) {
                 case "ls":
                     list();
                     break;
