@@ -1,10 +1,11 @@
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Client {
     public static void main(String[] args) throws IOException {
@@ -45,6 +46,8 @@ public class Client {
     }
 
     public static String optionMenu() {
+        ExecutorService es = Executors.newFixedThreadPool(10);
+
         Scanner scanner = new Scanner(System.in);
         System.out.print("> ");
         String command = scanner.nextLine();
@@ -59,7 +62,7 @@ public class Client {
             case "dwn":
                 return command;
             case "up":
-                return command;
+                es.submit(new UploadHandler(listen))
             case "q":
                 System.out.println("You have quit");
                 return command;
@@ -92,5 +95,35 @@ public class Client {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter file name to upload to server: ");
         scanner.nextLine();
+    }
+
+    public static class UploadHandler implements Runnable{
+        private ServerSocket listenSocket;
+        private String filePath = "ClientFiles/test_small.txt";
+
+        public UploadHandler(ServerSocket listenSocket) {
+            this.listenSocket = listenSocket;
+        }
+
+        public void run(){
+            try (Socket socket = new Socket("localhost", 3000);
+                FileInputStream fis = new FileInputStream(filePath);
+                OutputStream ops = socket.getOutputStream()){
+
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    ops.write(buffer, 0, bytesRead);
+                }
+
+                ops.close();
+                System.out.println("File Uploaded Successfully");
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
     }
 }

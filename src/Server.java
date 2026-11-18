@@ -35,7 +35,10 @@ public class Server {
                     byte[] reply = replyString.getBytes();
                     socketOut.write(reply);
                     socketOut.flush();
-                } else {
+                } else if ("up".equals(message)){
+
+                }
+                else {
                     socketOut.write("We'll get here when we get here.".getBytes());
                     socketOut.flush();
                 }
@@ -69,17 +72,15 @@ public class Server {
 
     public static class ClientHandler implements Runnable {
         private final Socket clientSocket;
+        private final File folder = new File("../ServerFiles");
+        private String fileName;
 
         public ClientHandler(Socket clientSocket) {
             this.clientSocket = clientSocket;
         }
 
         public void run() {
-            try {
-                clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            File fileToSend = new File(folder, "server_test.txt");
         }
     }
 
