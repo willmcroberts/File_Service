@@ -33,7 +33,9 @@ public class Client {
                     out.flush();
                     keepGoing = false;
                 } else if ("up".equals(clientToServerMessage)) {
-                    UploadHandler upload = new UploadHandler(in, out, "ClientFiles/test_small.txt");
+                    System.out.print("Enter file name you would like to upload: ");
+                    String fileName = "ClientFiles/" + scanner.nextLine();
+                    UploadHandler upload = new UploadHandler(in, out, fileName);
                     Thread uploadThread = new Thread(upload);
                     uploadThread.start();
 
@@ -117,7 +119,7 @@ public class Client {
             File file = new File(filePath);
 
             if (!file.exists() || !file.isFile()) {
-                System.out.println("File does not exist.");
+                System.out.println("File does not exist.\n");
                 return;
             }
 
