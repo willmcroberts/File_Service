@@ -1,8 +1,6 @@
 
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,59 +16,65 @@ public class Client {
         int serverPort = Integer.parseInt(args[1]);
 
         Socket mySocket = new Socket(serverIP, serverPort);
-        InputStream in = mySocket.getInputStream();
-        OutputStream out = mySocket.getOutputStream();
+        DataInputStream in = new DataInputStream(mySocket.getInputStream());
+        DataOutputStream out = new DataOutputStream(mySocket.getOutputStream());
+
+        Scanner scanner = new Scanner(System.in);
+        ExecutorService es = Executors.newFixedThreadPool(10);
 
         System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
         boolean keepGoing = true;
+        try {
+            while (keepGoing) {
+                String clientToServerMessage = optionMenu(scanner);
 
-        while (keepGoing) {
-            String clientToServerMessage = optionMenu();
+                if ("q".equals(clientToServerMessage)) {
+                    out.writeUTF("q");
+                    out.flush();
+                    keepGoing = false;
+                } else if ("up".equals(clientToServerMessage)) {
+                    UploadHandler upload = new UploadHandler(in, out, "ClientFiles/test_small.txt");
+                    Thread uploadThread = new Thread(upload);
+                    uploadThread.start();
 
-            if ("q".equals(clientToServerMessage)) {
-                keepGoing = false;
-            } else if (clientToServerMessage != null) {
-                out.write(clientToServerMessage.getBytes());
-                out.flush();
+                    try {
+                        uploadThread.join();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
 
-                byte[] buffer = new byte[1024];
-                int bytesRead = in.read(buffer);
+                } else if (clientToServerMessage != null) {
+                    out.writeUTF(clientToServerMessage);
+                    out.flush();
 
-                if (bytesRead != -1) {
-                    String reply = new String(buffer, 0, bytesRead);
+                    String reply = in.readUTF();
                     System.out.println(reply);
                 }
             }
+        } finally {
+            es.shutdown();
+            mySocket.close();
         }
-        mySocket.close();
     }
 
-    public static String optionMenu() {
-        ExecutorService es = Executors.newFixedThreadPool(10);
-
-        Scanner scanner = new Scanner(System.in);
+    public static String optionMenu(Scanner scanner) {
         System.out.print("> ");
         String command = scanner.nextLine();
 
         switch (command) {
             case "ls":
-                return command;
             case "del":
-                return command;
             case "rnm":
-                return command;
             case "dwn":
-                return command;
             case "up":
-                es.submit(new UploadHandler(listen))
             case "q":
-                System.out.println("You have quit");
                 return command;
+
             default:
                 System.out.println("Invalid Command\n");
                 System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q");
+                return null;
         }
-        return null;
     }
 
     public static void delete() {
@@ -97,33 +101,58 @@ public class Client {
         scanner.nextLine();
     }
 
-    public static class UploadHandler implements Runnable{
-        private ServerSocket listenSocket;
-        private String filePath = "ClientFiles/test_small.txt";
+    public static class UploadHandler implements Runnable {
 
-        public UploadHandler(ServerSocket listenSocket) {
-            this.listenSocket = listenSocket;
+        private final DataInputStream in;
+        private final DataOutputStream out;
+        private final String filePath;
+
+        public UploadHandler(DataInputStream in, DataOutputStream out, String filePath) {
+            this.in = in;
+            this.out = out;
+            this.filePath = filePath;
         }
 
-        public void run(){
-            try (Socket socket = new Socket("localhost", 3000);
-                FileInputStream fis = new FileInputStream(filePath);
-                OutputStream ops = socket.getOutputStream()){
+        public void run() {
+            File file = new File(filePath);
 
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-
-                while ((bytesRead = fis.read(buffer)) != -1) {
-                    ops.write(buffer, 0, bytesRead);
-                }
-
-                ops.close();
-                System.out.println("File Uploaded Successfully");
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            if (!file.exists() || !file.isFile()) {
+                System.out.println("File does not exist.");
+                return;
             }
 
+            try {
+                out.writeUTF("up");
+                out.flush();
+
+                String response = in.readUTF();
+
+                if (!response.equals("READY")) {
+                    System.out.println(response);
+                    return;
+                }
+
+                out.writeUTF(file.getName());
+                out.writeLong(file.length());
+                out.flush();
+
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+
+                    while ((bytesRead = fis.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+
+                    out.flush();
+                }
+
+                response = in.readUTF();
+                System.out.println(response);
+
+            } catch (IOException e) {
+                System.out.println("Upload failed: " + e.getMessage());
+            }
         }
     }
 }

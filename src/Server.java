@@ -1,59 +1,141 @@
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import static java.lang.System.out;
+import java.io.*;
+import java.net.*;
+import java.util.concurrent.*;
 
 public class Server {
     public static void main(String[] args) throws IOException {
+
         int port = 3000;
         int numThreads = 10;
-        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+
+        ExecutorService executorService =
+                Executors.newFixedThreadPool(numThreads);
 
         try (ServerSocket listenSocket = new ServerSocket(port)) {
-            Socket clientSocket = listenSocket.accept();
+            while (true) {
+                Socket clientSocket = listenSocket.accept();
 
-            InputStream in = clientSocket.getInputStream();
-            OutputStream socketOut = clientSocket.getOutputStream();
+                System.out.println("Client connected!");
 
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-
-            // Where the server reads and replies
-            while ((bytesRead = in.read(buffer)) != -1) {
-                String message = new String(buffer, 0, bytesRead).trim();
-                out.println(message);
-
-                if ("ls".equals(message)) {
-                    String replyString = listServerFiles();
-                    byte[] reply = replyString.getBytes();
-                    socketOut.write(reply);
-                    socketOut.flush();
-                } else if ("up".equals(message)){
-
-                }
-                else {
-                    socketOut.write("We'll get here when we get here.".getBytes());
-                    socketOut.flush();
-                }
+                executorService.submit(new ClientHandler(clientSocket)
+                );
             }
 
-            clientSocket.close();
-
         } catch (SocketException e) {
+            System.out.println("Server socket closed.");
+        } finally {
             executorService.shutdown();
         }
     }
 
+    public static class ClientHandler implements Runnable {
+
+        private final Socket clientSocket;
+        private final File serverFolder = new File("ServerFiles");
+
+        public ClientHandler(Socket clientSocket) {
+            this.clientSocket = clientSocket;
+        }
+
+        public void run() {
+
+            try (DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+                 DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())) {
+                while (true) {
+
+                    String command = in.readUTF();
+
+                    System.out.println("Received: " + command);
+
+                    switch (command) {
+
+                        case "up":
+                            receiveUpload(in, out);
+                            break;
+
+                        case "ls":
+                            out.writeUTF(listServerFiles());
+                            out.flush();
+                            break;
+
+                        case "q":
+                            return;
+
+                        default:
+                            out.writeUTF("Invalid command.");
+                            out.flush();
+                            break;
+                    }
+                }
+
+            } catch (EOFException e) {
+                System.out.println("Client disconnected.");
+            } catch (IOException e) {
+                System.out.println("Client connection error: " + e.getMessage());
+            } finally {
+                try {
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        private void receiveUpload(DataInputStream in,
+                                   DataOutputStream out) throws IOException {
+
+            out.writeUTF("READY");
+            out.flush();
+
+            String fileName = in.readUTF();
+            long fileSize = in.readLong();
+
+            fileName = new File(fileName).getName();
+
+            if (fileSize < 0) {
+                out.writeUTF("Invalid file size.");
+                out.flush();
+                return;
+            }
+
+            if (!serverFolder.exists()) {
+                serverFolder.mkdirs();
+            }
+
+            File destination = new File(serverFolder, fileName);
+
+            try (FileOutputStream fileOut = new FileOutputStream(destination)) {
+
+                byte[] buffer = new byte[1024];
+                long remaining = fileSize;
+
+                while (remaining > 0) {
+
+                    int bytesToRead =
+                            (int) Math.min(buffer.length, remaining);
+
+                    int bytesRead = in.read(buffer, 0, bytesToRead);
+
+                    if (bytesRead == -1) {
+                        throw new EOFException("File transfer interrupted.");
+                    }
+
+                    fileOut.write(buffer, 0, bytesRead);
+
+                    remaining -= bytesRead;
+                }
+            }
+
+            System.out.println("Uploaded: " + fileName);
+
+            out.writeUTF("Upload successful: " + fileName);
+            out.flush();
+        }
+    }
+
     public static String listServerFiles() {
-        File serverFileFolder = new File("ServerFiles");
-        File[] files = serverFileFolder.listFiles();
+        File serverFolder = new File("ServerFiles");
+        File[] files = serverFolder.listFiles();
 
         StringBuilder fileList = new StringBuilder();
 
@@ -63,47 +145,8 @@ public class Server {
                     fileList.append(file.getName()).append("\n");
                 }
             }
-        } else {
-            out.println("Server files list is empty");
-            return "";
         }
+
         return fileList.toString();
-    }
-
-    public static class ClientHandler implements Runnable {
-        private final Socket clientSocket;
-        private final File folder = new File("../ServerFiles");
-        private String fileName;
-
-        public ClientHandler(Socket clientSocket) {
-            this.clientSocket = clientSocket;
-        }
-
-        public void run() {
-            File fileToSend = new File(folder, "server_test.txt");
-        }
-    }
-
-    public static class KeyboardMonitor implements Runnable {
-        private final ServerSocket listenSocket;
-
-        public KeyboardMonitor(ServerSocket listenSocket) {
-            this.listenSocket = listenSocket;
-        }
-
-        public void run() {
-            Scanner keyboard = new Scanner(System.in);
-            while (true) {
-                String input = keyboard.nextLine();
-                if (input.equalsIgnoreCase("Q")) {
-                    try {
-                        listenSocket.close();
-                        return;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
     }
 }
