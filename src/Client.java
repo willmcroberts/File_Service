@@ -97,12 +97,6 @@ public class Client {
         scanner.nextLine();
     }
 
-    public static void upload() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter file name to upload to server: ");
-        scanner.nextLine();
-    }
-
     public static class UploadHandler implements Runnable {
 
         private final DataInputStream in;
