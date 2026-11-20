@@ -59,7 +59,6 @@ public class Client {
     }
 
     public static String optionMenu(Scanner scanner) {
-        System.out.print("> ");
         String command = scanner.nextLine();
 
         switch (command) {

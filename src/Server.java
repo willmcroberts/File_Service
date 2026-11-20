@@ -168,7 +168,7 @@ public class Server {
 
         public void run() {
             File file = new File(filePath);
-            System.out.println("start");
+
             if (!file.exists() || !file.isFile()) {
                 System.out.println("File does not exist.\n");
                 return;
@@ -202,7 +202,6 @@ public class Server {
 
                 response = in.readUTF();
                 System.out.println(response);
-                System.out.println("end");
 
             } catch (IOException e) {
                 System.out.println("Upload failed: " + e.getMessage());
