@@ -35,15 +35,8 @@ public class Client {
                 } else if ("up".equals(clientToServerMessage)) {
                     System.out.print("Enter file name you would like to upload: ");
                     String fileName = "ClientFiles/" + scanner.nextLine();
-                    UploadHandler upload = new UploadHandler(in, out, fileName);
-                    Thread uploadThread = new Thread(upload);
-                    uploadThread.start();
 
-                    try {
-                        uploadThread.join();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
+                    es.submit(new UploadHandler(in, out, fileName));
 
                 } else if (clientToServerMessage != null) {
                     out.writeUTF(clientToServerMessage);
