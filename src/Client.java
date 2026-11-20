@@ -38,7 +38,13 @@ public class Client {
 
                     es.submit(new UploadHandler(in, out, fileName));
 
-                } else if (clientToServerMessage != null) {
+                } else if("dwn".equals(clientToServerMessage)) {
+                    System.out.print("Enter file name you would like to download: ");
+                    String fileName = "ServerFiles/" + scanner.nextLine();
+
+                    es.submit(new Server.DownloadHandler(in, out, fileName));
+
+                }else if (clientToServerMessage != null) {
                     out.writeUTF(clientToServerMessage);
                     out.flush();
 
@@ -84,10 +90,56 @@ public class Client {
         scanner.nextLine();
     }
 
-    public static void download() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter file name to download from server: ");
-        scanner.nextLine();
+    public static void receiveDownload(DataInputStream in, DataOutputStream out) throws IOException {
+        final File clientFolder = new File("ClientFiles");
+
+
+        out.writeUTF("READY");
+        out.flush();
+
+        String fileName = in.readUTF();
+        long fileSize = in.readLong();
+
+        fileName = new File(fileName).getName();
+
+        if (fileSize < 0) {
+            out.writeUTF("Invalid file size.");
+            out.flush();
+            return;
+        }
+
+        if (!clientFolder.exists()) {
+            clientFolder.mkdirs();
+        }
+
+        File destination = new File(clientFolder, fileName);
+
+        try (FileOutputStream fileOut = new FileOutputStream(destination)) {
+
+            byte[] buffer = new byte[1024];
+            long remaining = fileSize;
+
+            while (remaining > 0) {
+
+                int bytesToRead =
+                        (int) Math.min(buffer.length, remaining);
+
+                int bytesRead = in.read(buffer, 0, bytesToRead);
+
+                if (bytesRead == -1) {
+                    throw new EOFException("File transfer interrupted.");
+                }
+
+                fileOut.write(buffer, 0, bytesRead);
+
+                remaining -= bytesRead;
+            }
+        }
+
+        System.out.println("Downloaded: " + fileName);
+
+        out.writeUTF("Download successful: " + fileName);
+        out.flush();
     }
 
     public static class UploadHandler implements Runnable {

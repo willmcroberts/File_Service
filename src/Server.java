@@ -58,6 +58,11 @@ public class Server {
                             out.flush();
                             break;
 
+                        case "dn":
+                            Client.receiveDownload(in, out);
+                            System.out.println("case");
+                            break;
+
                         case "q":
                             return;
 
@@ -148,5 +153,60 @@ public class Server {
         }
 
         return fileList.toString();
+    }
+
+    public static class DownloadHandler implements Runnable{
+        private final DataInputStream in;
+        private final DataOutputStream out;
+        private final String filePath;
+
+        public DownloadHandler(DataInputStream in, DataOutputStream out, String filePath) {
+            this.in = in;
+            this.out = out;
+            this.filePath = filePath;
+        }
+
+        public void run() {
+            File file = new File(filePath);
+            System.out.println("start");
+            if (!file.exists() || !file.isFile()) {
+                System.out.println("File does not exist.\n");
+                return;
+            }
+
+            try {
+                out.writeUTF("dn");
+                out.flush();
+
+                String response = in.readUTF();
+
+                if (!response.equals("READY")) {
+                    System.out.println(response);
+                    return;
+                }
+
+                out.writeUTF(file.getName());
+                out.writeLong(file.length());
+                out.flush();
+
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+
+                    while ((bytesRead = fis.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+
+                    out.flush();
+                }
+
+                response = in.readUTF();
+                System.out.println(response);
+                System.out.println("end");
+
+            } catch (IOException e) {
+                System.out.println("Upload failed: " + e.getMessage());
+            }
+        }
     }
 }
