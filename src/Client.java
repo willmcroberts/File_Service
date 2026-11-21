@@ -38,13 +38,20 @@ public class Client {
 
                     es.submit(new UploadHandler(in, out, fileName));
 
-                } else if("dwn".equals(clientToServerMessage)) {
+                } else if ("dwn".equals(clientToServerMessage)) {
                     System.out.print("Enter file name you would like to download: ");
                     String fileName = "ServerFiles/" + scanner.nextLine();
 
                     es.submit(new Server.DownloadHandler(in, out, fileName));
 
-                }else if (clientToServerMessage != null) {
+                } else if ("rnm".equals(clientToServerMessage)) {
+                    System.out.print("Enter file name you would like to rename: ");
+                    String fileName = "ServerFiles/" + scanner.nextLine();
+                    System.out.println("New file name: " + scanner.nextLine());
+                    String newFileName = scanner.nextLine();
+
+
+                } else if (clientToServerMessage != null) {
                     out.writeUTF(clientToServerMessage);
                     out.flush();
 
