@@ -41,7 +41,8 @@ public class Client {
                 } else if ("dwn".equals(clientToServerMessage)) {
                     System.out.print("Enter file name you would like to download: ");
                     String fileName = "ServerFiles/" + scanner.nextLine();
-
+                    // THIS WON'T WORK WHEN USING A DIFFERENT COMPUTER FOR THE SERVER
+                    // NEED TO SEND DATA OVER IN BYTES AND SUBMIT TASK THERE INSTEAD.
                     es.submit(new Server.DownloadHandler(in, out, fileName));
 
                 } else if ("rnm".equals(clientToServerMessage)) {
@@ -49,7 +50,6 @@ public class Client {
                     String fileName = "ServerFiles/" + scanner.nextLine();
                     System.out.println("New file name: " + scanner.nextLine());
                     String newFileName = scanner.nextLine();
-
 
                 } else if (clientToServerMessage != null) {
                     out.writeUTF(clientToServerMessage);
