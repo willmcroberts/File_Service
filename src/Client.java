@@ -51,6 +51,15 @@ public class Client {
                     sendMessage(out, "dwn?" + fileName);
                     receiveDownload(in, out);
 
+                } else if ("rnm".equals(clientToServerMessage)) {
+                    System.out.print("Enter file name you would like to rename: ");
+                    String fileName = scanner.nextLine();
+
+                    System.out.print("New file name: ");
+                    String newFileName = scanner.nextLine();
+
+                    sendMessage(out, "rnm?" + fileName + "?" + newFileName);
+
                 } else if ("ls".equals(clientToServerMessage)) {
                     sendMessage(out, "ls");
 
