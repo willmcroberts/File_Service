@@ -133,9 +133,111 @@ public class Server {
 
             System.out.println("Uploaded: " + fileName);
 
-            out.writeUTF("Upload successful: " + fileName);
-            out.flush();
+            sendMessage(out, "Upload successful: " + fileName);
         }
+
+        private void sendDownload(InputStream in,
+                                  OutputStream out,
+                                  String fileName) throws IOException {
+
+            fileName = new File(fileName).getName();
+
+            File file = new File(serverFolder, fileName);
+
+            if (!file.exists() || !file.isFile()) {
+                sendMessage(out, "File does not exist.");
+                return;
+            }
+
+            sendMessage(out, "READY");
+            sendMessage(out, file.getName());
+            sendMessage(out, String.valueOf(file.length()));
+
+            try (FileInputStream fis = new FileInputStream(file)) {
+
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+
+                out.flush();
+            }
+
+            String response = receiveMessage(in);
+            System.out.println(response);
+        }
+
+        private void renameFile(String oldFileName,
+                                String newFileName) {
+
+            oldFileName = new File(oldFileName).getName();
+            newFileName = new File(newFileName).getName();
+
+            File oldFile = new File(serverFolder, oldFileName);
+            File newFile = new File(serverFolder, newFileName);
+
+            if (!oldFile.exists()) {
+                System.out.println("File does not exist.");
+                return;
+            }
+
+            if (newFile.exists()) {
+                System.out.println("A file with that name already exists.");
+                return;
+            }
+
+            if (oldFile.renameTo(newFile)) {
+                System.out.println("Renamed: " + oldFileName + " to " + newFileName);
+            } else {
+                System.out.println("Rename failed.");
+            }
+        }
+    }
+
+    public static String sendMessage(OutputStream out,
+                                     String message) throws IOException {
+
+        byte[] data = (message + "?").getBytes();
+
+        out.write(data);
+        out.flush();
+
+        return message;
+    }
+
+    public static String receiveMessage(InputStream in) throws IOException {
+
+        byte[] buffer = new byte[1024];
+        int index = 0;
+        int nextByte;
+
+        while ((nextByte = in.read()) != -1) {
+
+            if (nextByte == '?') {
+                return new String(buffer, 0, index);
+            }
+
+            if (index == buffer.length) {
+                byte[] newBuffer = new byte[buffer.length * 2];
+
+                for (int i = 0; i < buffer.length; i++) {
+                    newBuffer[i] = buffer[i];
+                }
+
+                buffer = newBuffer;
+            }
+
+            buffer[index] = (byte) nextByte;
+            index++;
+        }
+
+        if (index == 0) {
+            return null;
+        }
+
+        throw new EOFException("Message was not terminated.");
     }
 
     public static String listServerFiles() {
