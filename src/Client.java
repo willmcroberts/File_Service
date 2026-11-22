@@ -16,22 +16,28 @@ public class Client {
         int serverPort = Integer.parseInt(args[1]);
 
         Socket mySocket = new Socket(serverIP, serverPort);
-        DataInputStream in = new DataInputStream(mySocket.getInputStream());
-        DataOutputStream out = new DataOutputStream(mySocket.getOutputStream());
+        InputStream in = mySocket.getInputStream();
+        OutputStream out = mySocket.getOutputStream();
 
         Scanner scanner = new Scanner(System.in);
         ExecutorService es = Executors.newFixedThreadPool(10);
 
-        System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
+        System.out.println("Type a command.\nList: ls\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
+
         boolean keepGoing = true;
+
         try {
             while (keepGoing) {
                 String clientToServerMessage = optionMenu(scanner);
 
+                if (clientToServerMessage == null) {
+                    continue;
+                }
+
                 if ("q".equals(clientToServerMessage)) {
-                    out.writeUTF("q");
-                    out.flush();
+                    sendMessage(out, "q");
                     keepGoing = false;
+
                 } else if ("up".equals(clientToServerMessage)) {
                     System.out.print("Enter file name you would like to upload: ");
                     String fileName = "ClientFiles/" + scanner.nextLine();
@@ -40,22 +46,15 @@ public class Client {
 
                 } else if ("dwn".equals(clientToServerMessage)) {
                     System.out.print("Enter file name you would like to download: ");
-                    String fileName = "ServerFiles/" + scanner.nextLine();
-                    // THIS WON'T WORK WHEN USING A DIFFERENT COMPUTER FOR THE SERVER
-                    // NEED TO SEND DATA OVER IN BYTES AND SUBMIT TASK THERE INSTEAD.
-                    es.submit(new Server.DownloadHandler(in, out, fileName));
+                    String fileName = scanner.nextLine();
 
-                } else if ("rnm".equals(clientToServerMessage)) {
-                    System.out.print("Enter file name you would like to rename: ");
-                    String fileName = "ServerFiles/" + scanner.nextLine();
-                    System.out.println("New file name: " + scanner.nextLine());
-                    String newFileName = scanner.nextLine();
+                    sendMessage(out, "dwn?" + fileName);
+                    receiveDownload(in, out);
 
                 } else if ("ls".equals(clientToServerMessage)) {
-                    out.writeUTF(clientToServerMessage);
-                    out.flush();
+                    sendMessage(out, "ls");
 
-                    String reply = in.readUTF();
+                    String reply = receiveMessage(in);
                     System.out.println(reply);
                 }
             }
@@ -70,7 +69,7 @@ public class Client {
         out.write(data);
         out.flush();
     }
-    
+
     public static String receiveMessage(InputStream in) throws IOException {
         byte[] buffer = new byte[1024];
         int bytesRead;
@@ -101,7 +100,6 @@ public class Client {
 
         switch (command) {
             case "ls":
-            case "del":
             case "rnm":
             case "dwn":
             case "up":
@@ -110,38 +108,28 @@ public class Client {
 
             default:
                 System.out.println("Invalid Command\n");
-                System.out.println("Type a command.\nList: ls\nDelete: del\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q");
+                System.out.println("Type a command.\nList: ls\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q");
                 return null;
         }
     }
 
-    public static void delete() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter file name to delete in the server: ");
-        scanner.nextLine();
-    }
-
-    public static void rename() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter file name to rename in the server: ");
-        scanner.nextLine();
-    }
-
-    public static void receiveDownload(DataInputStream in, DataOutputStream out) throws IOException {
+    public static void receiveDownload(InputStream in, OutputStream out) throws IOException {
         final File clientFolder = new File("ClientFiles");
 
+        String response = receiveMessage(in);
 
-        out.writeUTF("READY");
-        out.flush();
+        if (!response.equals("READY")) {
+            System.out.println(response);
+            return;
+        }
 
-        String fileName = in.readUTF();
-        long fileSize = in.readLong();
+        String fileName = receiveMessage(in);
+        long fileSize = Long.parseLong(receiveMessage(in));
 
         fileName = new File(fileName).getName();
 
         if (fileSize < 0) {
-            out.writeUTF("Invalid file size.");
-            out.flush();
+            System.out.println("Invalid file size.");
             return;
         }
 
@@ -152,14 +140,11 @@ public class Client {
         File destination = new File(clientFolder, fileName);
 
         try (FileOutputStream fileOut = new FileOutputStream(destination)) {
-
             byte[] buffer = new byte[1024];
             long remaining = fileSize;
 
             while (remaining > 0) {
-
-                int bytesToRead =
-                        (int) Math.min(buffer.length, remaining);
+                int bytesToRead = (int) Math.min(buffer.length, remaining);
 
                 int bytesRead = in.read(buffer, 0, bytesToRead);
 
@@ -168,24 +153,22 @@ public class Client {
                 }
 
                 fileOut.write(buffer, 0, bytesRead);
-
                 remaining -= bytesRead;
             }
         }
 
         System.out.println("Downloaded: " + fileName);
 
-        out.writeUTF("Download successful: " + fileName);
-        out.flush();
+        sendMessage(out, "Download successful: " + fileName);
     }
 
     public static class UploadHandler implements Runnable {
 
-        private final DataInputStream in;
-        private final DataOutputStream out;
+        private final InputStream in;
+        private final OutputStream out;
         private final String filePath;
 
-        public UploadHandler(DataInputStream in, DataOutputStream out, String filePath) {
+        public UploadHandler(InputStream in, OutputStream out, String filePath) {
             this.in = in;
             this.out = out;
             this.filePath = filePath;
@@ -200,19 +183,17 @@ public class Client {
             }
 
             try {
-                out.writeUTF("up");
-                out.flush();
+                sendMessage(out, "up");
 
-                String response = in.readUTF();
+                String response = receiveMessage(in);
 
                 if (!response.equals("READY")) {
                     System.out.println(response);
                     return;
                 }
 
-                out.writeUTF(file.getName());
-                out.writeLong(file.length());
-                out.flush();
+                sendMessage(out, file.getName());
+                sendMessage(out, String.valueOf(file.length()));
 
                 try (FileInputStream fis = new FileInputStream(file)) {
                     byte[] buffer = new byte[1024];
@@ -225,7 +206,7 @@ public class Client {
                     out.flush();
                 }
 
-                response = in.readUTF();
+                response = receiveMessage(in);
                 System.out.println(response);
 
             } catch (IOException e) {
