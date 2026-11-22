@@ -74,6 +74,10 @@ public class Server {
                             renameFile(oldFileName, newFileName);
                             break;
 
+                        case "del":
+                            String deleteFileName = receiveMessage(in);
+
+                            deleteFile(deleteFileName);
                         case "q":
                             return;
 
@@ -200,6 +204,21 @@ public class Server {
                 System.out.println("Renamed: " + oldFileName + " to " + newFileName);
             } else {
                 System.out.println("Rename failed.");
+            }
+        }
+
+        private void deleteFile(String deleteFileName){
+            deleteFileName = new File(deleteFileName).getName();
+
+            File deleteFile = new File(serverFolder, deleteFileName);
+
+            if (!deleteFile.exists()){
+                System.out.println("File does not exist.\n");
+                return;
+            }
+
+            if (deleteFile.delete()){
+                System.out.println("Deleted: " + deleteFileName);
             }
         }
     }

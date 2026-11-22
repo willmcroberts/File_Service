@@ -22,7 +22,7 @@ public class Client {
         Scanner scanner = new Scanner(System.in);
         ExecutorService es = Executors.newFixedThreadPool(10);
 
-        System.out.println("Type a command.\nList: ls\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q\n");
+        System.out.println("Type a command.\nList: ls\nRename: rnm\nDelete: del\nDownload: dwn\nUpload: up\nQuit: q\n");
 
         boolean keepGoing = true;
 
@@ -66,6 +66,13 @@ public class Client {
 
                     String reply = receiveMessage(in);
                     System.out.println(reply);
+                } else if ("del".equals(clientToServerMessage)){
+                    System.out.print("Enter file name you would like to delete: ");
+                    String fileName = scanner.nextLine();
+
+                    sendMessage(out, "del?" + fileName);
+
+                    System.out.println(fileName + " deleted");
                 }
             }
         } finally {
@@ -111,6 +118,7 @@ public class Client {
         switch (command) {
             case "ls":
             case "rnm":
+            case "del":
             case "dwn":
             case "up":
             case "q":
@@ -118,7 +126,7 @@ public class Client {
 
             default:
                 System.out.println("Invalid Command\n");
-                System.out.println("Type a command.\nList: ls\nRename: rnm\nDownload: dwn\nUpload: up\nQuit: q");
+                System.out.println("Type a command.\nList: ls\nRename: rnm\nDelete: del\nDownload: dwn\nUpload: up\nQuit: q");
                 return null;
         }
     }
