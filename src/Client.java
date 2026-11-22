@@ -65,6 +65,37 @@ public class Client {
         }
     }
 
+    public static void sendMessage(OutputStream out, String message) throws IOException {
+        byte[] data = (message + "?").getBytes();
+        out.write(data);
+        out.flush();
+    }
+    
+    public static String receiveMessage(InputStream in) throws IOException {
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+        StringBuilder message = new StringBuilder();
+
+        while ((bytesRead = in.read(buffer)) != -1) {
+            String received = new String(buffer, 0, bytesRead);
+
+            int delimiter = received.indexOf('?');
+
+            if (delimiter != -1) {
+                message.append(received, 0, delimiter);
+                break;
+            }
+
+            message.append(received);
+        }
+
+        if (message.isEmpty()) {
+            return null;
+        }
+
+        return message.toString();
+    }
+
     public static String optionMenu(Scanner scanner) {
         String command = scanner.nextLine();
 
