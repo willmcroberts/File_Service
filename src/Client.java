@@ -1,6 +1,7 @@
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,45 +35,51 @@ public class Client {
                     continue;
                 }
 
-                if ("q".equals(clientToServerMessage)) {
-                    sendMessage(out, "q");
-                    keepGoing = false;
+                switch (clientToServerMessage) {
+                    case "q" -> {
+                        sendMessage(out, "q");
+                        keepGoing = false;
+                    }
+                    case "up" -> {
+                        System.out.print("Enter file name you would like to upload: ");
+                        String fileName = "ClientFiles/" + scanner.nextLine();
 
-                } else if ("up".equals(clientToServerMessage)) {
-                    System.out.print("Enter file name you would like to upload: ");
-                    String fileName = "ClientFiles/" + scanner.nextLine();
+                        es.submit(new UploadHandler(in, out, fileName));
 
-                    es.submit(new UploadHandler(in, out, fileName));
+                    }
+                    case "dwn" -> {
+                        System.out.print("Enter file name you would like to download: ");
+                        String fileName = scanner.nextLine();
 
-                } else if ("dwn".equals(clientToServerMessage)) {
-                    System.out.print("Enter file name you would like to download: ");
-                    String fileName = scanner.nextLine();
+                        sendMessage(out, "dwn?" + fileName);
+                        receiveDownload(in, out);
 
-                    sendMessage(out, "dwn?" + fileName);
-                    receiveDownload(in, out);
+                    }
+                    case "rnm" -> {
+                        System.out.print("Enter file name you would like to rename: ");
+                        String fileName = scanner.nextLine();
 
-                } else if ("rnm".equals(clientToServerMessage)) {
-                    System.out.print("Enter file name you would like to rename: ");
-                    String fileName = scanner.nextLine();
+                        System.out.print("New file name: ");
+                        String newFileName = scanner.nextLine();
 
-                    System.out.print("New file name: ");
-                    String newFileName = scanner.nextLine();
+                        sendMessage(out, "rnm?" + fileName + "?" + newFileName);
 
-                    sendMessage(out, "rnm?" + fileName + "?" + newFileName);
+                        System.out.println("File renamed to " + newFileName);
+                    }
+                    case "ls" -> {
+                        sendMessage(out, "ls");
 
-                    System.out.println("File renamed to " + newFileName);
-                } else if ("ls".equals(clientToServerMessage)) {
-                    sendMessage(out, "ls");
+                        String reply = receiveMessage(in);
+                        System.out.println(reply);
+                    }
+                    case "del" -> {
+                        System.out.print("Enter file name you would like to delete: ");
+                        String fileName = scanner.nextLine();
 
-                    String reply = receiveMessage(in);
-                    System.out.println(reply);
-                } else if ("del".equals(clientToServerMessage)){
-                    System.out.print("Enter file name you would like to delete: ");
-                    String fileName = scanner.nextLine();
+                        sendMessage(out, "del?" + fileName);
 
-                    sendMessage(out, "del?" + fileName);
-
-                    System.out.println(fileName + " deleted");
+                        System.out.println(fileName + " deleted");
+                    }
                 }
             }
         } finally {
@@ -136,14 +143,16 @@ public class Client {
 
         String response = receiveMessage(in);
 
+        assert response != null;
         if (!response.equals("READY")) {
             System.out.println(response);
             return;
         }
 
         String fileName = receiveMessage(in);
-        long fileSize = Long.parseLong(receiveMessage(in));
+        long fileSize = Long.parseLong(Objects.requireNonNull(receiveMessage(in)));
 
+        assert fileName != null;
         fileName = new File(fileName).getName();
 
         if (fileSize < 0) {
@@ -205,6 +214,7 @@ public class Client {
 
                 String response = receiveMessage(in);
 
+                assert response != null;
                 if (!response.equals("READY")) {
                     System.out.println(response);
                     return;

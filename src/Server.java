@@ -1,6 +1,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.Objects;
 import java.util.concurrent.*;
 
 public class Server {
@@ -78,6 +79,7 @@ public class Server {
                             String deleteFileName = receiveMessage(in);
 
                             deleteFile(deleteFileName);
+                            break;
                         case "q":
                             return;
 
@@ -106,8 +108,9 @@ public class Server {
             sendMessage(out, "READY");
 
             String fileName = receiveMessage(in);
-            long fileSize = Long.parseLong(receiveMessage(in));
+            long fileSize = Long.parseLong(Objects.requireNonNull(receiveMessage(in)));
 
+            assert fileName != null;
             fileName = new File(fileName).getName();
 
             if (fileSize < 0) {
@@ -223,15 +226,14 @@ public class Server {
         }
     }
 
-    public static String sendMessage(OutputStream out,
-                                     String message) throws IOException {
+    public static void sendMessage(OutputStream out,
+                                   String message) throws IOException {
 
         byte[] data = (message + "?").getBytes();
 
         out.write(data);
         out.flush();
 
-        return message;
     }
 
     public static String receiveMessage(InputStream in) throws IOException {
@@ -249,9 +251,7 @@ public class Server {
             if (index == buffer.length) {
                 byte[] newBuffer = new byte[buffer.length * 2];
 
-                for (int i = 0; i < buffer.length; i++) {
-                    newBuffer[i] = buffer[i];
-                }
+                System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
 
                 buffer = newBuffer;
             }
