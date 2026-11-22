@@ -51,7 +51,7 @@ public class Client {
                     System.out.println("New file name: " + scanner.nextLine());
                     String newFileName = scanner.nextLine();
 
-                } else if (clientToServerMessage != null) {
+                } else if ("ls".equals(clientToServerMessage)) {
                     out.writeUTF(clientToServerMessage);
                     out.flush();
 
