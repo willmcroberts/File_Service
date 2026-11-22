@@ -60,6 +60,7 @@ public class Client {
 
                     sendMessage(out, "rnm?" + fileName + "?" + newFileName);
 
+                    System.out.println("File renamed to " + newFileName);
                 } else if ("ls".equals(clientToServerMessage)) {
                     sendMessage(out, "ls");
 
@@ -168,7 +169,7 @@ public class Client {
 
         System.out.println("Downloaded: " + fileName);
 
-        sendMessage(out, "Download successful: " + fileName);
+        sendMessage(out, "Download successful: " + fileName + "\n");
     }
 
     public static class UploadHandler implements Runnable {

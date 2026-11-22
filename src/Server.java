@@ -86,7 +86,7 @@ public class Server {
             } catch (EOFException e) {
                 System.out.println("Client disconnected.");
             } catch (IOException e) {
-                System.out.println("Client connection error: " + e.getMessage());
+                throw new RuntimeException(e);
             } finally {
                 try {
                     clientSocket.close();
@@ -141,7 +141,7 @@ public class Server {
 
             System.out.println("Uploaded: " + fileName);
 
-            sendMessage(out, "Upload successful: " + fileName);
+            sendMessage(out, "Upload successful: " + fileName + '\n');
         }
 
         private void sendDownload(InputStream in,
@@ -153,7 +153,7 @@ public class Server {
             File file = new File(serverFolder, fileName);
 
             if (!file.exists() || !file.isFile()) {
-                sendMessage(out, "File does not exist.");
+                sendMessage(out, "File does not exist.\n");
                 return;
             }
 
@@ -187,12 +187,12 @@ public class Server {
             File newFile = new File(serverFolder, newFileName);
 
             if (!oldFile.exists()) {
-                System.out.println("File does not exist.");
+                System.out.println("File does not exist.\n");
                 return;
             }
 
             if (newFile.exists()) {
-                System.out.println("A file with that name already exists.");
+                System.out.println("A file with that name already exists.\n");
                 return;
             }
 
