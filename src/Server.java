@@ -151,9 +151,7 @@ public class Server {
             sendMessage(out, "Upload successful: " + fileName + '\n');
         }
 
-        private void sendDownload(InputStream in,
-                                  OutputStream out,
-                                  String fileName) throws IOException {
+        private void sendDownload(InputStream in, OutputStream out, String fileName) throws IOException {
 
             fileName = new File(fileName).getName();
 
