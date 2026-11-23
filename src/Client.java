@@ -95,28 +95,34 @@ public class Client {
     }
 
     public static String receiveMessage(InputStream in) throws IOException {
+
         byte[] buffer = new byte[1024];
-        int bytesRead;
-        StringBuilder message = new StringBuilder();
+        int index = 0;
+        int nextByte;
 
-        while ((bytesRead = in.read(buffer)) != -1) {
-            String received = new String(buffer, 0, bytesRead);
+        while ((nextByte = in.read()) != -1) {
 
-            int delimiter = received.indexOf('?');
-
-            if (delimiter != -1) {
-                message.append(received, 0, delimiter);
-                break;
+            if (nextByte == '?') {
+                return new String(buffer, 0, index);
             }
 
-            message.append(received);
+            if (index == buffer.length) {
+                byte[] newBuffer = new byte[buffer.length * 2];
+
+                System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+
+                buffer = newBuffer;
+            }
+
+            buffer[index] = (byte) nextByte;
+            index++;
         }
 
-        if (message.isEmpty()) {
+        if (index == 0) {
             return null;
         }
 
-        return message.toString();
+        throw new EOFException("Message was not terminated.");
     }
 
     public static String optionMenu(Scanner scanner) {
